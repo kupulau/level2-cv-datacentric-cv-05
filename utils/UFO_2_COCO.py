@@ -2,11 +2,26 @@ import json
 from typing import Dict, Any
 from collections import Counter
 import os
-
+import argparse
 
 def parse_argument():
-    pass
-def convert_to_coco_format(data: Dict[str, Any]):
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('--ufo_path', default='/data/ephemeral/home/data/chinese_receipt/ufo/train.json', help='path to ufo format json file')
+    parser.add_argument('--coco_path', default='/data/ephemeral/home/data/chinese_receipt/ufo/coco_train.json', help='where to save coco format json file')
+    parser.add_argument('--use_seg', type=bool, default=True, help='whether to use seg attribute')
+    
+    args = parser.parse_args()
+    return args
+    
+    
+def convert_to_coco_format(data: Dict[str, Any], use_seg: bool):
+    if use_seg:
+        print("segmentation attribute를 이용해서 COCO format json을 생성합니다.")
+    else:
+        print("coco format 변환 시 segmentation attribute를 사용하지 않습니다")
+        print("변환 시 4개의 꼭짓점으로 만들어지는 가장 큰 직사각형이 새로운 box로 결정됩니다. 주의하세요.")
+    
     coco_data = {
         "images": [],
         "annotations": [],
@@ -38,11 +53,17 @@ def convert_to_coco_format(data: Dict[str, Any]):
             height = max(tl[1], tr[1], br[1], bl[1]) - min(tl[1], tr[1], br[1], bl[1])
             x = min(tl[0], tr[0], br[0], bl[0])
             y = min(tl[1], tr[1], br[1], bl[1])
+            
+            if use_seg:
+                seg = [tl+tr+br+bl]
+            else:
+                seg = []
+            
             coco_annotation = {
                 "id": annotation_id,
                 "image_id": image_id,
                 "category_id": 1,
-                "segmentation": [],
+                "segmentation": seg,
                 "area": width * height,
                 "bbox": [x, y, width, height],
                 "iscrowd": 0  
@@ -57,14 +78,21 @@ def convert_to_coco_format(data: Dict[str, Any]):
 
 
 def main():
-    with open("./data/thai_receipt/ufo/train.json", encoding='UTF8') as f:
+    args = parse_argument()
+    ufo_path = args.ufo_path
+    coco_path = args.coco_path
+    use_seg = args.use_seg
+    
+    with open(ufo_path, encoding='UTF8') as f:
         data = json.load(f)
+    print(f"{ufo_path}로부터 ufo format json file을 로드하였습니다.")
         
-    coco_data = convert_to_coco_format(data)
+    coco_data = convert_to_coco_format(data, use_seg)
     
     # Save COCO json
-    with open("./data/thai_receipt/ufo/train_coco.json", "w", encoding='UTF8') as f:
+    with open(coco_path, "w", encoding='UTF8') as f:
         json.dump(coco_data, f)
+    print(f"{coco_path}에 coco format json file을 저장하였습니다.\n\n")
 
 
 if __name__ == "__main__":

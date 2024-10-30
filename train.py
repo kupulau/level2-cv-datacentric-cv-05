@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--device', 
                         default='cuda' if cuda.is_available() else 'cpu')
     parser.add_argument('--num_workers', type=int, default=8)
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--batch_size', type=int, default=4)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--max_epoch', type=int, default=150)
     parser.add_argument('--save_interval', type=int, default=5)
@@ -69,7 +69,6 @@ def load_checkpoint(model, optimizer, scheduler, checkpoint_path):
     return start_epoch, best_val_loss
 
 
-
 def do_training(data_dir, model_dir, device, num_workers, batch_size,
                 learning_rate, max_epoch, save_interval, resume=None, num=1):
     # Dataset 및 DataLoader 설정
@@ -91,23 +90,23 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
         persistent_workers=True
     )
 
-    val_dataset = SceneTextDataset(
-        root_dir=data_dir,
-        split='val',
-        num=num,
-        color_jitter=False,
-        normalize=True,
-        map_scale=0.5
-    )
-    num_val_batches = math.ceil(len(val_dataset) / batch_size)
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        prefetch_factor=2,
-        persistent_workers=True
-    )
+    # val_dataset = SceneTextDataset(
+    #     root_dir=data_dir,
+    #     split='val',
+    #     num=num,
+    #     color_jitter=False,
+    #     normalize=True,
+    #     map_scale=0.5
+    # )
+    # num_val_batches = math.ceil(len(val_dataset) / batch_size)
+    # val_loader = DataLoader(
+    #     val_dataset,
+    #     batch_size=batch_size,
+    #     shuffle=False,
+    #     num_workers=num_workers,
+    #     prefetch_factor=2,
+    #     persistent_workers=True
+    # )
 
     # 모델, optimizer, scheduler 초기화
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -152,40 +151,40 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
 
         train_loss = epoch_loss / num_train_batches
         
-        # Validation
-        model.eval()
-        val_loss = 0
-        val_metrics = {'cls_loss': 0, 'angle_loss': 0, 'iou_loss': 0}
+        # # Validation
+        # model.eval()
+        # val_loss = 0
+        # val_metrics = {'cls_loss': 0, 'angle_loss': 0, 'iou_loss': 0}
         
-        with torch.no_grad():
-            with tqdm(total=num_val_batches) as pbar:
-                for img, gt_score_map, gt_geo_map, roi_mask in val_loader:
-                    pbar.set_description('[Validation]')
+        # with torch.no_grad():
+        #     with tqdm(total=num_val_batches) as pbar:
+        #         for img, gt_score_map, gt_geo_map, roi_mask in val_loader:
+        #             pbar.set_description('[Validation]')
                     
-                    loss, extra_info = model.train_step(img, gt_score_map, gt_geo_map, roi_mask)
-                    val_loss += loss.item()
+        #             loss, extra_info = model.train_step(img, gt_score_map, gt_geo_map, roi_mask)
+        #             val_loss += loss.item()
                     
-                    for key in val_metrics.keys():
-                        val_metrics[key] += extra_info[key]
+        #             for key in val_metrics.keys():
+        #                 val_metrics[key] += extra_info[key]
                     
-                    pbar.update(1)
-                    pbar.set_postfix({
-                        'Val Cls loss': extra_info['cls_loss'], 
-                        'Val Angle loss': extra_info['angle_loss'],
-                        'Val IoU loss': extra_info['iou_loss']
-                    })
+        #             pbar.update(1)
+        #             pbar.set_postfix({
+        #                 'Val Cls loss': extra_info['cls_loss'], 
+        #                 'Val Angle loss': extra_info['angle_loss'],
+        #                 'Val IoU loss': extra_info['iou_loss']
+        #             })
 
-        val_loss = val_loss / num_val_batches
-        for key in val_metrics.keys():
-            val_metrics[key] /= num_val_batches
+        # val_loss = val_loss / num_val_batches
+        # for key in val_metrics.keys():
+        #     val_metrics[key] /= num_val_batches
 
         scheduler.step()
 
         # 결과 출력
-        print('Epoch {}/{} | Train Loss: {:.4f} | Val Loss: {:.4f} | Elapsed time: {}'.format(
-            epoch + 1, max_epoch, train_loss, val_loss, timedelta(seconds=time.time() - epoch_start)))
-        print('Validation Metrics | Cls Loss: {:.4f} | Angle Loss: {:.4f} | IoU Loss: {:.4f}'.format(
-            val_metrics['cls_loss'], val_metrics['angle_loss'], val_metrics['iou_loss']))
+        print('Epoch {}/{} | Train Loss: {:.4f} | Elapsed time: {}'.format(
+            epoch + 1, max_epoch, train_loss, timedelta(seconds=time.time() - epoch_start)))
+        # print('Validation Metrics | Cls Loss: {:.4f} | Angle Loss: {:.4f} | IoU Loss: {:.4f}'.format(
+        #     val_metrics['cls_loss'], val_metrics['angle_loss'], val_metrics['iou_loss']))
 
         # 모델 저장
         if (epoch + 1) % save_interval == 0:
@@ -195,15 +194,15 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
                 model_dir, 'checkpoint_epoch{}.pth'.format(epoch + 1)
             )
         
-        # Best 모델 저장
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            save_checkpoint(
-                model, optimizer, scheduler,
-                epoch + 1, best_val_loss,
-                model_dir, 'best.pth'
-            )
-            print(f'Saved best model with validation loss: {val_loss:.4f}')
+        # # Best 모델 저장
+        # if val_loss < best_val_loss:
+        #     best_val_loss = val_loss
+        #     save_checkpoint(
+        #         model, optimizer, scheduler,
+        #         epoch + 1, best_val_loss,
+        #         model_dir, 'best.pth'
+        #     )
+        #     print(f'Saved best model with validation loss: {val_loss:.4f}')
 
 
 def main(args):

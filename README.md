@@ -119,6 +119,8 @@
  ┃ ┣ 📜COCO_2_UFO.py             # COCO -> UFO format 변경 코드
  ┃ ┣ 📜UFO_2_COCO.py             # UFO -> COCO format 변경 코드
  ┃ ┣ 📜visualize_test.py         # 이미지 시각화(test set) 도구
+ ┃ ┣ 📜visualize_custom.py       # 이미지 시각화(custom set) 도구
+ ┃ ┣ 📜inference_custom.py       # 커스텀 셋에 대한 추론 도구(json으로 출력)
  ┃ ┣ 📜pickle_preprocessing.py   # 데이터 전처리 유틸리티(pickle)
  ┃ ┗ 📜train_val_split.py        # 데이터 train, val set 분리 유틸리티
  ┃

@@ -10,6 +10,7 @@ import cv2
 import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
+from utils.evaluation_util import *
 
 
 def cal_distance(x1, y1, x2, y2):
@@ -425,6 +426,7 @@ class SceneTextDataset(Dataset):
         self,
         root_dir,
         split="train",
+        evaluation_dir = "",
         num=0,
         color_jitter=True,
         normalize=True,
@@ -443,7 +445,10 @@ class SceneTextDataset(Dataset):
         self.score_maps = total["score_maps"]
         self.geo_maps = total["geo_maps"]
         self.roi_masks = total["roi_masks"]
-            
+        self.vertices = total["vertices"]
+        self.evaluation_dir = evaluation_dir
+        self.split = split
+        
         print(f"Loaded {len(self.images)} samples")
 
         self.color_jitter = color_jitter
@@ -459,6 +464,10 @@ class SceneTextDataset(Dataset):
         score_map = self.score_maps[idx]
         geo_map = self.geo_maps[idx]
         roi_mask = self.roi_masks[idx]
+        vertice = self.vertices[idx]
+        
+        if self.split == 'val':
+            write_result_txt(self.evaluation_dir, 'gt', vertice, idx)
 
         # augmentation 적용
         funcs = []

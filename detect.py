@@ -8,7 +8,7 @@ from albumentations.augmentations.geometric.resize import LongestMaxSize
 
 from dataset import get_rotate_mat
 
-MAX_BOX_PREDICTIONS = 1000
+MAX_BOX_PREDICTIONS = 200
 
 
 def print_warning(num_boxes):
@@ -110,11 +110,23 @@ def get_bboxes(score, geo, score_thresh=0.9, nms_thresh=0.2):
     return boxes
 
 
-def detect(model, images, input_size, map_scale=0.5):
-    prep_fn = A.Compose([
-        LongestMaxSize(input_size), A.PadIfNeeded(min_height=input_size, min_width=input_size,
-                                                  position='top_left'),
-        A.Normalize(), ToTensorV2()])
+def detect(model, images, input_size, map_scale=0.5, mode="test"):
+    if mode == 'test':
+        prep_fn = A.Compose([
+            LongestMaxSize(input_size), 
+            A.PadIfNeeded(min_height=input_size, min_width=input_size,
+                                                    position="top_left"),
+            A.Normalize(),
+            ToTensorV2()
+            ])
+    else:
+        # validation의 경우 이미 normalize된 이미지를 가져오기 때문에 수행 안함
+        prep_fn = A.Compose([
+            LongestMaxSize(input_size), 
+            A.PadIfNeeded(min_height=input_size, min_width=input_size,
+                                                    position="top_left"),
+            ToTensorV2()
+            ])
     device = list(model.parameters())[0].device
 
     batch, orig_sizes = [], []

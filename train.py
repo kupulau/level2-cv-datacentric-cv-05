@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 sys.path.append("/data/ephemeral/home/code")
 import os.path as osp
 import time
@@ -19,6 +20,10 @@ from model import EAST
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.optim.lr_scheduler import LinearLR
 
+from detect import detect
+import subprocess
+from utils.evaluation_util import *
+
 
 def parse_args():
     parser = ArgumentParser()
@@ -28,11 +33,15 @@ def parse_args():
                         default=os.environ.get('SM_CHANNEL_TRAIN', 'data'))
     parser.add_argument('--model_dir', type=str, 
                         default=os.environ.get('SM_MODEL_DIR', 'trained_models'))
+    parser.add_argument('--evaluation_dir', type=str,
+                        default='/data/ephemeral/home/evaluation')
+    parser.add_argument('--use_metric', type=int,
+                        default=1)
     parser.add_argument('--device', 
                         default='cuda' if cuda.is_available() else 'cpu')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--batch_size', type=int, default=4)
-    parser.add_argument('--learning_rate', type=float, default=1e-5)
+    parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--max_epoch', type=int, default=200)
     parser.add_argument('--save_interval', type=int, default=10)
     parser.add_argument('--resume', type=str, default=None,
@@ -96,8 +105,8 @@ def get_cosine_scheduler(optimizer, num_epochs, num_warmup_epochs=5):
         milestones=[num_warmup_epochs]
     )
 
-def do_training(data_dir, model_dir, device, num_workers, batch_size,
-                learning_rate, max_epoch, save_interval, resume=None, num=1):
+def do_training(data_dir, model_dir, evaluation_dir, device, num_workers, batch_size,
+                learning_rate, max_epoch, save_interval, resume=None, num=1, use_metric=0):
     # Dataset 및 DataLoader 설정
     train_dataset = SceneTextDataset(
         root_dir=data_dir,
@@ -120,6 +129,7 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
     val_dataset = SceneTextDataset(
         root_dir=data_dir,
         split='val',
+        evaluation_dir=evaluation_dir,
         num=num,
         color_jitter=False,
         normalize=True,
@@ -182,6 +192,7 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
         model.eval()
         val_loss = 0
         val_metrics = {'cls_loss': 0, 'angle_loss': 0, 'iou_loss': 0}
+        idx = 0
         
         with torch.no_grad():
             with tqdm(total=num_val_batches) as pbar:
@@ -194,6 +205,14 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
                     for key in val_metrics.keys():
                         val_metrics[key] += extra_info[key]
                     
+                    
+                    # TedEval을 활용한 f1 score 계산
+                    if use_metric:
+                        detect_results = detect(model, img.numpy().transpose((0, 2, 3, 1)), input_size=1024, mode='val')
+                        for i in range(len(detect_results)):
+                            write_result_txt(evaluation_dir, 'result', detect_results[i].reshape(-1, 8), idx)
+                            idx += 1
+                    
                     pbar.update(1)
                     pbar.set_postfix({
                         'Val Cls loss': extra_info['cls_loss'], 
@@ -204,6 +223,19 @@ def do_training(data_dir, model_dir, device, num_workers, batch_size,
         val_loss = val_loss / num_val_batches
         for key in val_metrics.keys():
             val_metrics[key] /= num_val_batches
+        
+        if use_metric:
+            gt_txt_files = glob.glob(osp.join(evaluation_dir, 'gt', "*.txt"))
+            pred_txt_files = glob.glob(osp.join(evaluation_dir, 'result', "*.txt"))
+            gt_path = zip_from_list(evaluation_dir, 'gt', gt_txt_files)
+            pred_path = zip_from_list(evaluation_dir, 'result', pred_txt_files)
+        
+            metric_result = subprocess.run(
+                ['python3', '/data/ephemeral/home/TedEval/script.py', f'-g={gt_path}', f'-s={pred_path}'],
+                capture_output=True
+            )
+            eval_result = decode_result(metric_result.stdout)
+            print(eval_result)
 
         scheduler.step()
 

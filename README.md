@@ -60,7 +60,7 @@
 
 ### 수정하기
 
-![image](https://github.com/user-attachments/assets/e6d03619-fe9b-4b14-8266-e169c765f9a0)
+![image](https://github.com/user-attachments/assets/5117d3e0-3af3-4f68-b029-8059dbcaa3da)
 
 ## 💻 개발 환경
 
@@ -114,23 +114,36 @@
 
 ```
 
-📦level3-datacentric-cv-05
+📦level2-datacentric-cv-05
  ┣ 📂utils
  ┃ ┣ 📜COCO_2_UFO.py             # COCO -> UFO format 변경 코드
  ┃ ┣ 📜UFO_2_COCO.py             # UFO -> COCO format 변경 코드
  ┃ ┣ 📜visualize_test.py         # 이미지 시각화(test set) 도구
  ┃ ┣ 📜pickle_preprocessing.py   # 데이터 전처리 유틸리티(pickle)
  ┃ ┗ 📜train_val_split.py        # 데이터 train, val set 분리 유틸리티
+ ┃ ┣ 📜COCO_2_UFO.py                # COCO -> UFO format 변경 코드
+ ┃ ┣ 📜UFO_2_COCO.py                # UFO -> COCO format 변경 코드
+ ┃ ┣ 📜align_image_name_format.py   # image 이름 포맷 정리 도구
+ ┃ ┣ 📜merge_json.py                # 데이터셋 병합 도구
+ ┃ ┣ 📜inference_custom.py          # 추론(custom set) 도구
+ ┃ ┣ 📜visualize_test.py            # 이미지 시각화(test set) 도구
+ ┃ ┣ 📜visualize_custom.py          # 이미지 시각화(custom set) 도구
+ ┃ ┣ 📜pickle_preprocessing.py      # 데이터 전처리 유틸리티(pickle)
+ ┃ ┣ 📜evaluation_util.py           # val을 평가할 eval을 f1 score로 설정
+ ┃ ┣ 📜emsemble.py                  # 앙상블 코드
+ ┃ ┗ 📜train_val_split.py           # 데이터 train, val set 분리 유틸리티
  ┃
- ┣ 📜train.py
- ┣ 📜inference.py
+ ┣ 📜train.py                       # 변경된 dataset에 따라 수정
+ ┣ 📜inference.py                   # 저장된 checkpoint에 따라 수정
+ ┣ 📜dataset.py                     # pickle 파일로 학습할 수 있도록 변경
+ ┣ 📜deteval.py
  ┣ 📜model.py
  ┣ 📜loss.py
- ┣ 📜dataset.py
- ┣ 📜deteval.py
  ┣ 📜east_dataset.py
  ┣ 📜requirements.txt
- ┗ 📜datect.py
+ ┣ 📜datect.py
+ ┗ 📜README.md
+
 
 ```
 

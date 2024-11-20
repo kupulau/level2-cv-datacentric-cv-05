@@ -58,10 +58,13 @@
 
 - 2024.10.28 (월) 10:00 ~ 2024.11.7 (목) 19:00
 
+<<<<<<< HEAD
 ### 수정하기
 
 ![image](https://github.com/user-attachments/assets/5117d3e0-3af3-4f68-b029-8059dbcaa3da)
 
+=======
+>>>>>>> 36c610d2ecb1988dec6d7fec001068843a818079
 ## 💻 개발 환경
 
 ```bash
@@ -75,10 +78,12 @@
 
 ## 🏆 프로젝트 결과
 
+![image](https://github.com/user-attachments/assets/4ae35e54-2720-4c16-a85b-8b270716a692)
+
 ## ✏️ Wrap-Up Report
 
 - 프로젝트의 전반적인 내용은 아래 랩업 리포트를 참고 바랍니다.
-- [Wrap-Up Report]
+- [Wrap-Up Report] https://drive.google.com/file/d/1ikmZuu5waB-IaA-fTON2T8Gf2TzUtS4P/view?usp=sharing
 
 ## 📁 데이터셋 구조
 
@@ -116,6 +121,16 @@
 
 📦level2-datacentric-cv-05
  ┣ 📂utils
+<<<<<<< HEAD
+=======
+ ┃ ┣ 📜COCO_2_UFO.py             # COCO -> UFO format 변경 코드
+ ┃ ┣ 📜UFO_2_COCO.py             # UFO -> COCO format 변경 코드
+ ┃ ┣ 📜visualize_test.py         # 이미지 시각화(test set) 도구
+ ┃ ┣ 📜visualize_custom.py       # 이미지 시각화(custom set) 도구
+ ┃ ┣ 📜inference_custom.py       # 커스텀 셋에 대한 추론 도구(json으로 출력)
+ ┃ ┣ 📜pickle_preprocessing.py   # 데이터 전처리 유틸리티(pickle)
+ ┃ ┗ 📜train_val_split.py        # 데이터 train, val set 분리 유틸리티
+>>>>>>> 36c610d2ecb1988dec6d7fec001068843a818079
  ┃ ┣ 📜COCO_2_UFO.py                # COCO -> UFO format 변경 코드
  ┃ ┣ 📜UFO_2_COCO.py                # UFO -> COCO format 변경 코드
  ┃ ┣ 📜align_image_name_format.py   # image 이름 포맷 정리 도구
@@ -141,11 +156,5 @@
 
 
 ```
-
-<br />
-
-## 🧱 Structure
-
-</details>
 
 <br />

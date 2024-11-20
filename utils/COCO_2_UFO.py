@@ -1,9 +1,26 @@
 import json
 from typing import Dict, Any
 from collections import Counter
+import argparse
+
+def parse_argument():
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('--ufo_path', default='/data/ephemeral/home/data/chinese_receipt/ufo/new_train.json', help='where to save format json file')
+    parser.add_argument('--coco_path', default='/data/ephemeral/home/data/chinese_receipt/ufo/coco_train.json', help='path to coco format json file')
+    parser.add_argument('--use_seg', type=bool, default=True, help='whether to use seg attribute')
+    
+    args = parser.parse_args()
+    return args
 
 
-def convert_to_your_format(data: Dict[str, Any]):
+def convert_to_your_format(data: Dict[str, Any], use_seg: bool):
+    if use_seg:
+        print("segmentation attribute를 이용해서 UFO format json을 복원합니다.")
+    else:
+        print("COCO format bbox attribute를 이용해서 UFO format json을 복원합니다")
+        print("모든 사각형이 직사각형으로 변환됨에 주의하세요!")
+    
     your_format = {"images": {}}
 
     # imd id : 파일명 형태의 dictionary
@@ -13,11 +30,23 @@ def convert_to_your_format(data: Dict[str, Any]):
         image_id = annotation["image_id"]
         image_name = image_id_to_filename[image_id]
         bbox = annotation["bbox"]
+        seg = annotation['segmentation']
+        id = annotation['id']
 
-        tl = [bbox[0], bbox[1]]
-        tr = [bbox[0] + bbox[2], bbox[1]]
-        br = [bbox[0] + bbox[2], bbox[1] + bbox[3]]
-        bl = [bbox[0], bbox[1] + bbox[3]]
+        if len(seg) and use_seg:
+            tl = seg[0][:2]
+            tr = seg[0][2:4]
+            br = seg[0][4:6]
+            bl = seg[0][6:]
+        else:
+            tl = [bbox[0], bbox[1]]
+            tr = [bbox[0] + bbox[2], bbox[1]]
+            br = [bbox[0] + bbox[2], bbox[1] + bbox[3]]
+            bl = [bbox[0], bbox[1] + bbox[3]]
+            
+            if use_seg:
+                print(f"image {image_name}에 대해 segmentation 정보가 존재하지 않아 직사각형을 활용해 복원된 bbox가 존재합니다.")
+                print(f"annotation id : {id}\n\n")
         
         # COCO에서 UFO로 변환시 비는 정보는 placeholder로 대체
         if image_name not in your_format["images"]:
@@ -58,15 +87,24 @@ def convert_to_your_format(data: Dict[str, Any]):
 
 
 def main():
+    args = parse_argument()
+    ufo_path = args.ufo_path
+    coco_path = args.coco_path
+    use_seg = args.use_seg
+    
     # Load COCO JSON
-    with open("/data/ephemeral/home/code/data/thai_receipt/ufo/thai_first_relabel_COCO.json") as f:
+    with open(coco_path) as f:
         coco_data = json.load(f)
+    print(f"{coco_path}로부터 coco format json file을 로드하였습니다.")
     
     # UFO로 변환
-    your_format_data = convert_to_your_format(coco_data)
+    your_format_data = convert_to_your_format(coco_data, use_seg)
     
-    with open("/data/ephemeral/home/code/data/thai_receipt/ufo/thai_first_relabel_UFO.json", "w") as f:
+    with open(ufo_path, "w") as f:
         json.dump(your_format_data, f)
-
+        
+    print(f"{ufo_path}에 ufo format json file을 저장하였습니다.\n\n")
+    
+    
 if __name__ == "__main__":
     main()
